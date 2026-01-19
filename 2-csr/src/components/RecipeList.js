@@ -2,10 +2,26 @@ import { useState, useEffect } from 'react';
 import { getRecettes } from '../services/api';
 import RecipeCard from './RecipeCard';
 
-export default function RecipeList() {
+export default function RecipeList({ searchTerm = "" }) {
   const [recettes, setRecettes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
+
+  const filteredRecipes = recettes.filter((recette) => {
+    const name = recette.name ?? "";
+    const query = searchTerm ?? "";
+    return name.toLowerCase().includes(query.toLowerCase());
+  });
+
+  useEffect(() => {
+  const timer = setTimeout(() => {
+    setDebouncedSearch(searchTerm);
+  }, 300);
+
+  return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   useEffect(() => {
     async function fetchRecettes() {
@@ -23,28 +39,23 @@ export default function RecipeList() {
   }, []);
 
   if (loading) {
-    return (
-      <div style={styles.loading}>
-        <p>Chargement des recettes...</p>
-      </div>
-    );
+    return <p style={styles.loading}>Chargement des recettes...</p>;
   }
 
   if (error) {
-    return (
-      <div style={styles.error}>
-        <p>❌ Erreur : {error}</p>
-      </div>
-    );
+    return <p style={styles.error}>❌ Erreur : {error}</p>;
   }
 
   return (
     <div style={styles.container}>
       <h1 style={styles.title}>Toutes nos recettes</h1>
-      <p style={styles.subtitle}>{recettes.length} recettes disponibles</p>
-      
+
+      <p style={styles.subtitle}>
+        {filteredRecipes.length} recette(s) trouvée(s)
+      </p>
+
       <div style={styles.grid}>
-        {recettes.map((recette) => (
+        {filteredRecipes.map((recette) => (
           <RecipeCard key={recette.id} recette={recette} />
         ))}
       </div>

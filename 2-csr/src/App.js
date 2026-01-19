@@ -40,6 +40,8 @@ function App() {
 
   const [isOpen, setIsOpen] = useState(false);
 
+  const [searchTerm, setSearchTerm] = useState("");
+
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
   };
@@ -52,11 +54,15 @@ function App() {
         <div style={styles.app}>
           {/* Header reçoit le bouton ☰ */}
           {/* <Header toggleSidebar={toggleSidebar} /> */}
-          <Header toggleSidebar={() => setIsOpen(!isOpen)} />
+          <Header 
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            toggleSidebar={() => setIsOpen(!isOpen)} />
           {/* <Header /> */}
           <main style={styles.main}>
             <Routes>
-              <Route path="/" element={<RecipeList />} />
+              {/* <Route path="/" element={<RecipeList />} /> */}
+              <Route path="/" element={<RecipeList searchTerm={searchTerm} />} />
               <Route path="/recettes/:id" element={<RecipeDetail />} />
               <Route path="/favorites" element={<Favorites />} />
               <Route path="/login" element={<LoginForm />} />
