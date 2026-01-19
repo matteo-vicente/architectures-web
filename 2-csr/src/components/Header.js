@@ -1,7 +1,7 @@
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
-export default function Header() {
+export default function Header({ toggleSidebar }) {
   const { user, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
@@ -11,7 +11,13 @@ export default function Header() {
   };
 
   return (
+    
     <header style={styles.header}>
+      <button className="menu-btn" onClick={toggleSidebar}>
+        ☰
+      </button>
+
+      <h1>🍲 Recettes</h1>
       <img 
         src="/cuisine.jpeg" 
         alt="Cuisine" 
@@ -40,13 +46,14 @@ export default function Header() {
 const styles = {
   header: {
     backgroundColor: 'white',
-    borderBottom: '2px solid #ddd',
+    borderBottom: '2px solid #ffffff',
     padding: '1rem',
   },
   image: {
     width: '100%',
     maxHeight: '200px',
     objectFit: 'cover',
+    objectPosition: 'center -75px',
     borderRadius: '8px',
   },
   nav: {
@@ -70,7 +77,7 @@ const styles = {
   },
   button: {
     padding: '0.5rem 1rem',
-    backgroundColor: '#dc3545',
+    backgroundColor: '#f1f1f1',
     color: 'white',
     border: 'none',
     borderRadius: '4px',

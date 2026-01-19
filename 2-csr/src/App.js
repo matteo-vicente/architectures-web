@@ -24,6 +24,7 @@
 
 // export default App;
 
+import { useState } from "react";
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import Header from './components/Header';
@@ -31,13 +32,28 @@ import RecipeList from './components/RecipeList';
 import RecipeDetail from './components/RecipeDetail';
 import Favorites from './components/Favorites';
 import LoginForm from './components/LoginForm';
+import Sidebar from './components/Sidebar';
+import Navbar from './components/Navbar';
+import "./App.css";
 
 function App() {
+
+  const [isOpen, setIsOpen] = useState(false);
+
+  const toggleSidebar = () => {
+    setIsOpen(!isOpen);
+  };
+
   return (
     <AuthProvider>
       <BrowserRouter>
+      {/* Sidebar TOUJOURS montée */}
+        <Sidebar isOpen={isOpen} toggleSidebar={toggleSidebar} />
         <div style={styles.app}>
-          <Header />
+          {/* Header reçoit le bouton ☰ */}
+          {/* <Header toggleSidebar={toggleSidebar} /> */}
+          <Header toggleSidebar={() => setIsOpen(!isOpen)} />
+          {/* <Header /> */}
           <main style={styles.main}>
             <Routes>
               <Route path="/" element={<RecipeList />} />
