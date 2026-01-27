@@ -49,7 +49,7 @@ export async function getRecette(id) {
 
 export async function login(username, password) {
   try {
-    const response = await fetch(`${API_URL}/auth/login`, {
+    const response = await fetch(`${API_URL}/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
