@@ -1,13 +1,19 @@
 import { useAuth } from '../context/AuthContext';
 import { addToFavorites, removeFromFavorites } from '../services/api';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function RecipeCard({ recette, isFavorite = false, onFavoriteChange }) {
   const { token, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
   const [favorite, setFavorite] = useState(isFavorite);
   const [loading, setLoading] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
-  const handleFavoriteClick = async () => {
+  const handleFavoriteClick = async (e) => {
+    e.stopPropagation(); // ⛔ empêche la navigation
+
     if (!isAuthenticated) {
       alert('Vous devez être connecté pour gérer vos favoris');
       return;
@@ -22,10 +28,8 @@ export default function RecipeCard({ recette, isFavorite = false, onFavoriteChan
         await addToFavorites(recette.id, token);
         setFavorite(true);
       }
-      
-      if (onFavoriteChange) {
-        onFavoriteChange();
-      }
+
+      if (onFavoriteChange) onFavoriteChange();
     } catch (error) {
       alert('Erreur : ' + error.message);
     } finally {
@@ -34,47 +38,63 @@ export default function RecipeCard({ recette, isFavorite = false, onFavoriteChan
   };
 
   return (
-    <div style={styles.card}>
+    <div
+      style={{
+        ...styles.card,
+        transform: isHovered ? 'scale(1.03)' : 'scale(1)',
+        boxShadow: isHovered
+          ? '0 10px 28px rgba(0,0,0,0.15)'
+          : '0 2px 8px rgba(0,0,0,0.1)',
+        cursor: 'pointer',
+      }}
+      onClick={() => navigate(`/recettes/${recette.id}`)}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       {recette.image_url && (
-        <img 
-          src={recette.image_url} 
-          alt={recette.name} 
-          style={styles.image}
+        <img
+          src={recette.image_url}
+          alt={recette.name}
+          style={{
+            ...styles.image,
+            transform: isHovered ? 'scale(1.08)' : 'scale(1)',
+            transition: 'transform 0.3s ease',
+          }}
         />
       )}
+
       <div style={styles.content}>
         <h3 style={styles.title}>{recette.name}</h3>
+
         <p style={styles.description}>
           {recette.description?.substring(0, 100)}...
         </p>
-        
+
         <div style={styles.meta}>
           {recette.prep_time > 0 && (
-            <span style={styles.metaItem}>⏱️ {recette.prep_time + recette.cook_time} min</span>
+            <span style={styles.metaItem}>
+              ⏱️ {recette.prep_time + recette.cook_time} min
+            </span>
           )}
           {recette.servings > 0 && (
-            <span style={styles.metaItem}>👥 {recette.servings} pers.</span>
+            <span style={styles.metaItem}>
+              👥 {recette.servings} pers.
+            </span>
           )}
         </div>
-        
-        <div style={styles.actions}>
-          <a href={`/recettes/${recette.id}`} style={styles.link}>
-            Voir la recette →
-          </a>
-          
-          {isAuthenticated && (
-            <button 
-              onClick={handleFavoriteClick}
-              disabled={loading}
-              style={{
-                ...styles.favoriteButton,
-                backgroundColor: favorite ? '#ff6b6b' : '#51cf66'
-              }}
-            >
-              {loading ? '...' : favorite ? '❤️ Retirer' : '🤍 Ajouter'}
-            </button>
-          )}
-        </div>
+
+        {isAuthenticated && (
+          <button
+            onClick={handleFavoriteClick}
+            disabled={loading}
+            style={{
+              ...styles.favoriteButton,
+              backgroundColor: favorite ? '#ff6b6b' : '#51cf66',
+            }}
+          >
+            {loading ? '...' : favorite ? '❤️ Retirer' : '🤍 Ajouter'}
+          </button>
+        )}
       </div>
     </div>
   );
