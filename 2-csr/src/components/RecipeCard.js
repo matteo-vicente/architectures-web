@@ -1,31 +1,41 @@
 import { useAuth } from '../context/AuthContext';
 import { addToFavorites, removeFromFavorites } from '../services/api';
 import { useState } from 'react';
+import { useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 
 export default function RecipeCard({ recette, isFavorite = false, onFavoriteChange }) {
-  const { token, isAuthenticated } = useAuth();
+  const { user, token, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   const [favorite, setFavorite] = useState(isFavorite);
   const [loading, setLoading] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
+  useEffect(() => {
+    setFavorite(isFavorite);
+  }, [isFavorite]);
+
   const handleFavoriteClick = async (e) => {
-    e.stopPropagation(); // ⛔ empêche la navigation
+    e.stopPropagation();
 
     if (!isAuthenticated) {
       alert('Vous devez être connecté pour gérer vos favoris');
       return;
     }
 
+    if (!user?.username) {
+      alert("Ton username n'est pas disponible. Déconnecte-toi puis reconnecte-toi.");
+      return;
+    }
+
     setLoading(true);
     try {
       if (favorite) {
-        await removeFromFavorites(recette.id, token);
+        await removeFromFavorites(user.username, recette.id, token);
         setFavorite(false);
       } else {
-        await addToFavorites(recette.id, token);
+        await addToFavorites(user.username, recette.id, token);
         setFavorite(true);
       }
 
@@ -67,7 +77,7 @@ export default function RecipeCard({ recette, isFavorite = false, onFavoriteChan
         <h3 style={styles.title}>{recette.name}</h3>
 
         <p style={styles.description}>
-          {recette.description?.substring(0, 100)}...
+          {recette.description ? `${recette.description.substring(0, 100)}...` : ""}
         </p>
 
         <div style={styles.meta}>
@@ -107,7 +117,7 @@ const styles = {
     overflow: 'hidden',
     backgroundColor: 'white',
     boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-    transition: 'transform 0.2s',
+    transition: 'transform 0.2s, box-shadow 0.2s',
   },
   image: {
     width: '100%',
@@ -139,28 +149,15 @@ const styles = {
     alignItems: 'center',
     gap: '0.25rem',
   },
-  actions: {
-    display: 'flex',
-    gap: '0.5rem',
-    flexWrap: 'wrap',
-  },
-  link: {
-    padding: '0.75rem 1rem',
-    backgroundColor: '#007bff',
-    color: 'white',
-    textDecoration: 'none',
-    borderRadius: '6px',
-    textAlign: 'center',
-    flex: '1',
-    fontWeight: '500',
-  },
   favoriteButton: {
+    width: '100%',
     padding: '0.75rem 1rem',
     border: 'none',
     borderRadius: '6px',
     cursor: 'pointer',
     color: 'white',
-    flex: '1',
     fontWeight: '500',
+    transition: 'opacity 0.2s',
   },
 };
+

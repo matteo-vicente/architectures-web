@@ -1,13 +1,40 @@
 const API_URL = 'https://gourmet.cours.quimerch.com';
 
 async function handleResponse(response) {
+  // Pour les favoris, accepter aussi les réponses vides ou non-JSON
   const contentType = response.headers.get('content-type');
   
+  // Si la réponse est OK mais pas du JSON, on considère ça comme un succès
+  if (response.ok && (!contentType || !contentType.includes('application/json'))) {
+    return { success: true, status: response.status };
+  }
+
+  async function handleResponse(response) {
+  const contentType = response.headers.get('content-type');
+
+  // Si OK et pas JSON => succès
+  if (response.ok && (!contentType || !contentType.includes('application/json'))) {
+    return { success: true, status: response.status };
+  }
+
+  // Si pas JSON => lire le texte, et en faire une vraie erreur si !ok
   if (!contentType || !contentType.includes('application/json')) {
     const text = await response.text();
-    console.error('Réponse non-JSON reçue:', text);
-    throw new Error('Le serveur a renvoyé une réponse invalide');
+    if (!response.ok) {
+      throw new Error(text || `Erreur HTTP: ${response.status}`);
+    }
+    return { success: true, status: response.status, raw: text };
   }
+
+  // JSON
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.message || `Erreur HTTP: ${response.status}`);
+  }
+  return data;
+}
+
+  
   
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
@@ -49,7 +76,7 @@ export async function getRecette(id) {
 
 export async function login(username, password) {
   try {
-    const response = await fetch(`${API_URL}/auth/login`, {
+    const response = await fetch(`${API_URL}/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -64,37 +91,48 @@ export async function login(username, password) {
   }
 }
 
-export async function addToFavorites(recetteId, token) {
-  try {
-    const response = await fetch(`${API_URL}/favorites/${recetteId}`, {
-      method: 'POST',
+export async function getFavoritesByUser(username, token) {
+  const response = await fetch(
+    `${API_URL}/users/${encodeURIComponent(username)}/favorites`,
+    {
+      method: "GET",
       headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        Accept: "application/json",
       },
-    });
-    return handleResponse(response);
-  } catch (error) {
-    console.error('Erreur addToFavorites:', error);
-    throw error;
-  }
+    }
+  );
+
+  return handleResponse(response);
 }
 
-export async function removeFromFavorites(recetteId, token) {
-  try {
-    const response = await fetch(`${API_URL}/favorites/${recetteId}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/json',
-      },
-    });
-    return handleResponse(response);
-  } catch (error) {
-    console.error('Erreur removeFromFavorites:', error);
-    throw error;
-  }
+export async function addToFavorites(username, recipeID, token) {
+  const url = `${API_URL}/users/${encodeURIComponent(username)}/favorites?recipeID=${encodeURIComponent(recipeID)}`;
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+      'Accept': 'application/json, application/xml',
+      'Content-Type': 'application/json',
+    },
+  });
+
+  return handleResponse(response);
+}
+
+export async function removeFromFavorites(username, recipeID, token) {
+  const url = `${API_URL}/users/${encodeURIComponent(username)}/favorites?recipeID=${encodeURIComponent(recipeID)}`;
+
+  const response = await fetch(url, {
+    method: 'DELETE',
+    headers: {
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+      'Accept': 'application/json, application/xml',
+    },
+  });
+
+  return handleResponse(response);
 }
 
 export async function getFavorites(token) {
@@ -112,3 +150,4 @@ export async function getFavorites(token) {
     throw error;
   }
 }
+

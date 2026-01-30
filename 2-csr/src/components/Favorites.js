@@ -1,38 +1,48 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { getFavoritesByUser } from '../services/api';
 import { getFavorites } from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import RecipeCard from './RecipeCard';
 
 export default function Favorites() {
-  const { token, isAuthenticated } = useAuth();
+  const { token, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Ajoutez useCallback ici
   const loadFavorites = useCallback(async () => {
     if (!isAuthenticated) {
       setLoading(false);
       return;
     }
-    
+
+    if (!user?.username) {
+      setError("Username indisponible (reconnecte-toi).");
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
-      const data = await getFavorites(token);
-      setFavorites(data);
+      const data = await getFavoritesByUser(user.username, token);
+
+      // IMPORTANT: l’API renvoie [{ recipe: {...} }]
+      const recipes = Array.isArray(data) ? data.map((row) => row.recipe) : [];
+      setFavorites(recipes);
+
       setError(null);
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  }, [token, isAuthenticated]); // Dépendances
+  }, [token, isAuthenticated, user?.username]);
 
   useEffect(() => {
     loadFavorites();
-  }, [loadFavorites]); // Maintenant loadFavorites est stable
+  }, [loadFavorites]);
 
   if (!isAuthenticated) {
     return (
