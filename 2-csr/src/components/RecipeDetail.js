@@ -1,17 +1,35 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getRecette, addToFavorites, removeFromFavorites } from '../services/api';
+import { getRecette, addToFavorites, removeFromFavorites, getFavoritesByUser } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 export default function RecipeDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { token, isAuthenticated } = useAuth();
+  const { token, isAuthenticated, user } = useAuth();
   const [recette, setRecette] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
+
+  useEffect(() => {
+    async function fetchFavoriteState() {
+      if (!isAuthenticated || !user?.username) return;
+
+      try {
+        const favRows = await getFavoritesByUser(user.username, token);
+        const ids = new Set(
+          (favRows ?? []).map(row => row?.recipe?.id).filter(Boolean)
+        );
+        setIsFavorite(ids.has(id)); // id vient de useParams (string)
+      } catch (e) {
+        // optionnel: console.warn(e)
+      }
+    }
+
+    fetchFavoriteState();
+  }, [id, isAuthenticated, token, user?.username]);
 
   useEffect(() => {
     async function fetchRecette() {
@@ -38,10 +56,10 @@ export default function RecipeDetail() {
     setFavoriteLoading(true);
     try {
       if (isFavorite) {
-        await removeFromFavorites(recette.id, token);
+        await removeFromFavorites(user.username, recette.id, token);
         setIsFavorite(false);
       } else {
-        await addToFavorites(recette.id, token);
+        await addToFavorites(user.username, recette.id, token);
         setIsFavorite(true);
       }
     } catch (error) {

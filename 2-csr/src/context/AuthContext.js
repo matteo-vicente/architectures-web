@@ -4,35 +4,60 @@ import { login as apiLogin } from '../services/api';
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
+  // const [user, setUser] = useState(null);
+  // const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const savedToken = localStorage.getItem('auth_token');
-    const savedUser = localStorage.getItem('user');
-    
-   if (savedToken) setToken(savedToken);
+  const [token, setToken] = useState(
+    () => localStorage.getItem('auth_token')
+  );
 
-  if (savedUser) {
+  const [user, setUser] = useState(
+    () => JSON.parse(localStorage.getItem('user'))
+  );
+
+const isAuthenticated = !!token;
+
+  useEffect(() => {
     try {
-      setUser(JSON.parse(savedUser));
-    } catch {
+      const savedToken = localStorage.getItem('auth_token');
+      const savedUser = localStorage.getItem('user');
+      
+      if (savedToken && savedUser) {
+        // Vérifier que le JSON est valide
+        try {
+          const parsedUser = JSON.parse(savedUser);
+          setToken(savedToken);
+          setUser(parsedUser);
+        } catch (parseError) {
+          console.error('Erreur de parsing du user:', parseError);
+          // Si le JSON est corrompu, on nettoie
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('user');
+        }
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement de l\'auth:', error);
+      // En cas d'erreur, on nettoie tout
+      localStorage.removeItem('auth_token');
       localStorage.removeItem('user');
+    } finally {
+      setLoading(false);
     }
-}
-    setLoading(false);
   }, []);
 
   const login = async (username, password) => {
     try {
       const data = await apiLogin(username, password);
+
+      // console.log("LOGIN RESPONSE :", data);
       
       setToken(data.token);
-      setUser(data.user);
+      setUser({ username });
+      // setUser(data.user);
       
       localStorage.setItem('auth_token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('user', JSON.stringify({ username }));
       
       return { success: true };
     } catch (error) {
@@ -45,6 +70,7 @@ export function AuthProvider({ children }) {
     setUser(null);
     localStorage.removeItem('auth_token');
     localStorage.removeItem('user');
+    localStorage.removeItem('dev_favorites');
   };
 
   const value = {
@@ -55,6 +81,21 @@ export function AuthProvider({ children }) {
     isAuthenticated: !!token,
     loading,
   };
+
+  // Afficher un loader pendant le chargement
+  if (loading) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        fontSize: '1.5rem'
+      }}>
+        Chargement...
+      </div>
+    );
+  }
 
   return (
     <AuthContext.Provider value={value}>

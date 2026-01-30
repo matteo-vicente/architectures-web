@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
-import { getRecettes } from '../services/api';
+import { getRecettes, getFavoritesByUser } from '../services/api';
 import RecipeCard from './RecipeCard';
+import { useAuth } from '../context/AuthContext';
 
 export default function RecipeList({ searchTerm = "" }) {
+  const { isAuthenticated, token, user } = useAuth();
+
   const [recettes, setRecettes] = useState([]);
+  const [favoriteIds, setFavoriteIds] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
 
   const filteredRecipes = recettes.filter((recette) => {
     const name = recette.name ?? "";
@@ -16,18 +18,23 @@ export default function RecipeList({ searchTerm = "" }) {
   });
 
   useEffect(() => {
-  const timer = setTimeout(() => {
-    setDebouncedSearch(searchTerm);
-  }, 300);
-
-  return () => clearTimeout(timer);
-  }, [searchTerm]);
-
-  useEffect(() => {
-    async function fetchRecettes() {
+    async function fetchData() {
       try {
         const data = await getRecettes();
         setRecettes(data);
+
+        if (isAuthenticated && user?.username) {
+          const favRows = await getFavoritesByUser(user.username, token);
+          const ids = new Set(
+            (favRows ?? [])
+              .map(row => row?.recipe?.id)
+              .filter(Boolean)
+          );
+          setFavoriteIds(ids);
+        } else {
+          setFavoriteIds(new Set());
+        }
+
       } catch (err) {
         setError(err.message);
       } finally {
@@ -35,16 +42,11 @@ export default function RecipeList({ searchTerm = "" }) {
       }
     }
 
-    fetchRecettes();
-  }, []);
+    fetchData();
+  }, [isAuthenticated, token, user?.username]);
 
-  if (loading) {
-    return <p style={styles.loading}>Chargement des recettes...</p>;
-  }
-
-  if (error) {
-    return <p style={styles.error}>❌ Erreur : {error}</p>;
-  }
+  if (loading) return <p style={styles.loading}>Chargement des recettes...</p>;
+  if (error) return <p style={styles.error}>❌ Erreur : {error}</p>;
 
   return (
     <div style={styles.container}>
@@ -56,12 +58,17 @@ export default function RecipeList({ searchTerm = "" }) {
 
       <div style={styles.grid}>
         {filteredRecipes.map((recette) => (
-          <RecipeCard key={recette.id} recette={recette} />
+          <RecipeCard
+            key={recette.id}
+            recette={recette}
+            isFavorite={favoriteIds.has(recette.id)}
+          />
         ))}
       </div>
     </div>
   );
 }
+
 
 const styles = {
   container: {
