@@ -1,4 +1,23 @@
+/**
+ * Couche "client API" : le backend est utilisé comme un serveur de données (API REST).
+ * Dans une architecture CSR (Single Page Application), le navigateur récupère du JSON
+ * puis réalise le rendu côté client.
+ *
+ * Routes principales utilisées dans le TD :
+ * - GET /recipes
+ * - GET /recipes/:id
+ * - POST /login
+ * - GET/POST/DELETE /users/:username/favorites
+ */
+
 const API_URL = 'https://gourmet.cours.quimerch.com';
+
+/**
+ * Normalise les réponses HTTP de l’API REST.
+ * Objectif : centraliser la gestion d’erreurs et la lecture JSON pour éviter de dupliquer
+ * la logique dans les composants React.
+ */
+
 
 async function handleResponse(response) {
   // Pour les favoris, accepter aussi les réponses vides ou non-JSON

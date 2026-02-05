@@ -3,6 +3,13 @@ import { login as apiLogin } from '../services/api';
 
 const AuthContext = createContext();
 
+/**
+ * Contexte d’authentification (SPA/CSR).
+ * Stocke le token côté client pour appeler l’API REST (Authorization: Bearer ...).
+ * Le token est persisté dans localStorage pour conserver la session après refresh.
+ */
+
+
 export function AuthProvider({ children }) {
   // const [user, setUser] = useState(null);
   // const [token, setToken] = useState(null);

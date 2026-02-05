@@ -11,11 +11,19 @@ export default function RecipeList({ searchTerm = "" }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const filteredRecipes = recettes.filter((recette) => {
+  const filteredRecipes = (recettes ?? []).filter((recette) => {
     const name = recette.name ?? "";
     const query = searchTerm ?? "";
     return name.toLowerCase().includes(query.toLowerCase());
   });
+
+
+/**
+ * En CSR, le composant déclenche le chargement des données (API REST) puis déclenche le rendu.
+ * Ici on charge la liste (GET /recipes) et, si l’utilisateur est authentifié, ses favoris.
+ * Le filtrage (searchTerm) est ensuite réalisé côté navigateur, sans requête serveur.
+ */
+
 
   useEffect(() => {
     async function fetchData() {

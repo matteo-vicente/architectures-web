@@ -2,6 +2,15 @@
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
+## Tests
+
+- `npm test -- --watchAll=false`
+
+Les tests couvrent :
+- l’appel aux routes de l’API REST (serveur de données),
+- une logique CSR côté UI (filtrage rendu navigateur),
+- la persistance du token d’authentification (localStorage).
+
 ## Available Scripts
 
 In the project directory, you can run:
