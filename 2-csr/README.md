@@ -11,6 +11,17 @@ Les tests couvrent :
 - une logique CSR côté UI (filtrage rendu navigateur),
 - la persistance du token d’authentification (localStorage).
 
+## Code quality – ESLint
+
+This project uses ESLint to enforce basic code quality and consistency rules.
+
+### Custom Rules
+You can create custom rules to use with ESLint in order to adapt linting
+to the specific needs of the project. Custom rules help enforce architectural
+decisions, coding conventions, or best practices that are not covered by
+default ESLint configurations.
+
+
 ## Available Scripts
 
 In the project directory, you can run:
